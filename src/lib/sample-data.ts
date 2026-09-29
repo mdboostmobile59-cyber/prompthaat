@@ -1,0 +1,100 @@
+import { PromptCardProps } from "@/components/shared/PromptCard";
+
+export const popularPrompts: PromptCardProps[] = [
+  {
+    id: "1",
+    slug: "cute-panda-rescue-story",
+    title: "Cute Panda Rescue Story",
+    category: "Animals & Pets",
+    description: "Cinematic emotional rescue story of an adorable baby panda in a bamboo forest.",
+    imageUrl: "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=600&auto=format&fit=crop&q=80",
+    isPremium: false,
+    aiModel: "Kling AI",
+  },
+  {
+    id: "2",
+    slug: "cyberpunk-dhaka-2099",
+    title: "Cyberpunk Dhaka Rickshaw City",
+    category: "Fantasy & Sci-Fi",
+    description: "Neon futuristic nighttime visual of Dhaka city with floating rickshaws and vibrant rain reflections.",
+    imageUrl: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80",
+    isPremium: true,
+    aiModel: "Veo / Sora",
+  },
+  {
+    id: "3",
+    slug: "asmr-traditional-pottery",
+    title: "ASMR Traditional Clay Pottery Making",
+    category: "ASMR",
+    description: "Close-up slow motion cinematic lighting of hands shaping earthen clay pots with satisfying water droplets.",
+    imageUrl: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600&auto=format&fit=crop&q=80",
+    isPremium: true,
+    aiModel: "Seedance",
+  },
+];
+
+export const latestPrompts: PromptCardProps[] = [
+  {
+    id: "4",
+    slug: "bengali-village-sunrise-nature",
+    title: "Misty Sunrise Over Rural River",
+    category: "Nature & Wildlife",
+    description: "Golden hour photorealistic morning mist rising over green paddy fields and tranquil village boats.",
+    imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80",
+    isPremium: false,
+    aiModel: "Midjourney",
+  },
+  {
+    id: "5",
+    slug: "retro-3d-clay-animation-character",
+    title: "Cute Claymation Bakery Chef",
+    category: "Art & Animation",
+    description: "Charming claymation style short video prompt featuring a tiny chef baking mini croissants.",
+    imageUrl: "https://images.unsplash.com/photo-1558655146-d09347e92766?w=600&auto=format&fit=crop&q=80",
+    isPremium: true,
+    aiModel: "Kling AI",
+  },
+  {
+    id: "6",
+    slug: "hyperrealistic-spicy-biryani-macro",
+    title: "Sizzling Kacchi Biryani Macro Shot",
+    category: "Food",
+    description: "Mouth-watering commercial advertisement shot of steaming basmati rice with golden tender meat.",
+    imageUrl: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&auto=format&fit=crop&q=80",
+    isPremium: false,
+    aiModel: "Veo",
+  },
+];
+
+export const freePrompts: PromptCardProps[] = [
+  {
+    id: "7",
+    slug: "funny-cat-coffee-barista",
+    title: "Cat Barista Making Latte Art",
+    category: "Comedy",
+    description: "Whimsical funny clip of a fluffy cat carefully pouring a heart into coffee foam.",
+    imageUrl: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80",
+    isPremium: false,
+    aiModel: "Midjourney",
+  },
+  {
+    id: "8",
+    slug: "magical-forest-fairy-lighting",
+    title: "Bioluminescent Forest Waterfall",
+    category: "Fantasy & Sci-Fi",
+    description: "Glowing mushrooms and ethereal blue waterfalls in a nighttime enchanted jungle.",
+    imageUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80",
+    isPremium: false,
+    aiModel: "Gemini",
+  },
+  {
+    id: "9",
+    slug: "bengali-wedding-cinematic-portrait",
+    title: "Royal Crimson Bengali Bridal Portrait",
+    category: "Art & Animation",
+    description: "Exquisite details of gold jewelry, red katan saree, and cinematic warm studio lighting.",
+    imageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80",
+    isPremium: false,
+    aiModel: "Midjourney",
+  },
+];
