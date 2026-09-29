@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X, Sparkles, User } from "lucide-react";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,40 +20,31 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <Link
-              href="/"
-              className="text-sm font-medium text-white hover:text-brand-orange transition-colors"
-            >
+            <Link href="/" className="text-sm font-medium text-white hover:text-brand-orange transition-colors">
               Home
             </Link>
-            <Link
-              href="/browse"
-              className="text-sm font-medium text-gray-300 hover:text-brand-orange transition-colors"
-            >
+            <Link href="/browse" className="text-sm font-medium text-gray-300 hover:text-brand-orange transition-colors">
               Browse Prompts
             </Link>
-            <Link
-              href="/categories"
-              className="text-sm font-medium text-gray-300 hover:text-brand-orange transition-colors"
-            >
+            <Link href="/categories" className="text-sm font-medium text-gray-300 hover:text-brand-orange transition-colors">
               Categories
             </Link>
-            <Link
-              href="/premium"
-              className="text-sm font-medium text-gray-300 hover:text-brand-orange transition-colors"
-            >
+            <Link href="/premium" className="text-sm font-medium text-gray-300 hover:text-brand-orange transition-colors">
               Premium
             </Link>
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-300 hover:text-brand-orange transition-colors"
-            >
-              Login
+            <Link href="/dashboard" className="text-sm font-medium text-gray-300 hover:text-brand-orange transition-colors">
+              Dashboard
             </Link>
           </nav>
 
           {/* Right Action Button */}
           <div className="hidden md:flex items-center gap-4">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            >
+              Login
+            </Link>
             <Link
               href="/register"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-brand-orange hover:bg-brand-orangeHover transition-all shadow-md shadow-brand-orange/20"
@@ -108,13 +99,20 @@ export default function Header() {
             Premium
           </Link>
           <Link
-            href="/login"
+            href="/dashboard"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-800"
           >
-            Login
+            Dashboard
           </Link>
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col gap-2">
+            <Link
+              href="/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block w-full text-center px-4 py-2.5 rounded-lg text-sm font-semibold text-gray-300 bg-gray-800 hover:bg-gray-700"
+            >
+              Login
+            </Link>
             <Link
               href="/register"
               onClick={() => setMobileMenuOpen(false)}
