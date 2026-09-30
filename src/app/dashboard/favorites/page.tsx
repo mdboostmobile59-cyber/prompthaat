@@ -41,10 +41,10 @@ export default async function FavoritesPage() {
         }));
     }
 
-    // ফলব্যাক: যদি ডাটাবেজের কোনো আইডি স্যাম্পল ডেটায় থাকে
+    // টাইপ এরর মুক্ত নিরাপদ ফলব্যাক
     if (savedPrompts.length === 0 && dbFavorites.length > 0) {
       const favIds = new Set(dbFavorites.map((f) => f.promptId));
-      savedPrompts = allPromptsData.filter((p) => favIds.has(p.id));
+      savedPrompts = (allPromptsData as any[]).filter((p: any) => favIds.has(p.id));
     }
   } catch (error) {
     console.error("Failed to load user favorites from DB:", error);
