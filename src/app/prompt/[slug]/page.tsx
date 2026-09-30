@@ -1,199 +1,179 @@
-import { notFound } from "next/navigation";
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, Lock, Calendar, Layers, Cpu, CheckCircle2 } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
-import { allPromptsData } from "@/lib/sample-data";
-import WatchSampleBtn from "@/components/shared/WatchSampleBtn";
-import CopyButton from "@/components/shared/CopyButton";
+import { Layers, Plus, Trash2, Sparkles, Lock, ArrowUpRight, Edit } from "lucide-react";
 
-interface PromptDetailsPageProps {
-  params: Promise<{ slug: string }>;
-}
+export default function AdminPromptsPage() {
+  const [prompts, setPrompts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function PromptDetailsPage({ params }: PromptDetailsPageProps) {
-  const { slug } = await params;
-  const user: any = await getCurrentUser();
-
-  let prompt: any = null;
-  let isUnlocked = false;
-
-  // ১. ডাটাবেজ থেকে প্রম্পট খোঁজা
-  try {
-    const dbPrompt = await prisma.prompt.findUnique({
-      where: { slug },
-      include: { category: true },
-    });
-
-    if (dbPrompt) {
-      prompt = {
-        id: dbPrompt.id,
-        slug: dbPrompt.slug,
-        title: dbPrompt.title,
-        category: dbPrompt.category?.name || "General",
-        description: dbPrompt.description,
-        promptContent: dbPrompt.promptContent,
-        imageUrl: dbPrompt.imageUrl,
-        aiModel: dbPrompt.aiModel,
-        promptType: dbPrompt.promptType,
-        isPremium: dbPrompt.isPremium,
-        price: Number(dbPrompt.price || 49),
-        createdAt: dbPrompt.createdAt.toISOString().split("T")[0],
-      };
-
-      // ইউজার কি ইতিমধ্যে এটি কিনেছেন?
-      if (user && dbPrompt.isPremium) {
-        const purchase = await prisma.purchase.findUnique({
-          where: {
-            userId_promptId: {
-              userId: user.userId,
-              promptId: dbPrompt.id,
-            },
-          },
-        });
-        if (purchase) isUnlocked = true;
-      }
+  const loadPrompts = async () => {
+    try {
+      const res = await fetch("/api/admin/prompts");
+      const data = await res.json();
+      if (data.prompts) setPrompts(data.prompts);
+    } catch {
+      console.error("Failed to load prompts");
+    } finally {
+      setLoading(false);
     }
-  } catch {
-    // ডাটাবেজে না পেলে ফলব্যাকে যাবে
-  }
+  };
 
-  // ২. ফলব্যাক চেক (যদি ডাটাবেজে না থাকে তবে ডামি ডেটা থেকে নেবে)
-  if (!prompt) {
-    const fallback = allPromptsData.find((p) => p.slug === slug);
-    if (!fallback) notFound();
-    prompt = {
-      ...fallback,
-      price: 49,
-    };
-  }
+  useEffect(() => {
+    loadPrompts();
+  }, []);
 
-  // যদি ফ্রি হয় তাহলে তো অলরেডি আনলকড
-  if (!prompt.isPremium) {
-    isUnlocked = true;
-  }
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`আপনি কি "${title}" প্রম্পটটি ডিলিট করতে চান?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/prompts/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setPrompts(prompts.filter((p) => p.id !== id));
+      } else {
+        alert("প্রম্পট ডিলিট করা যায়নি");
+      }
+    } catch {
+      alert("সমস্যা হয়েছে");
+    }
+  };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-      <div>
+    <div className="space-y-8 max-w-6xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
+            Content Engine
+          </span>
+          <h1 className="text-3xl font-black text-white mt-1 flex items-center gap-3">
+            <Layers className="w-8 h-8 text-brand-orange" />
+            Prompt Management
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            ওয়েবসাইটের সব প্রম্পট পরিচালনা ও এডিট করুন।
+          </p>
+        </div>
+
         <Link
-          href="/browse"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors"
+          href="/admin/prompts/new"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-brand-orange hover:bg-brand-orangeHover text-white font-bold text-sm transition-all shadow-lg shadow-brand-orange/20"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to All Prompts
+          <Plus className="w-4 h-4" />
+          Add New Prompt
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        <div className="rounded-2xl overflow-hidden border border-gray-800 bg-gray-900 shadow-2xl">
-          <img
-            src={prompt.imageUrl}
-            alt={prompt.title}
-            className="w-full h-auto object-cover aspect-[16/10]"
-          />
-        </div>
-
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-orange">
-                {prompt.category}
-              </span>
-              <span className="text-gray-600">•</span>
-              {prompt.isPremium ? (
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-brand-orange">
-                  <Lock className="w-3 h-3" /> PREMIUM (৳{prompt.price})
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400">
-                  <Sparkles className="w-3 h-3" /> FREE
-                </span>
-              )}
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">
-              {prompt.title}
-            </h1>
-          </div>
-
-          <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
-            {prompt.description}
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 bg-[#151B28] border border-gray-800 p-4 rounded-xl text-xs">
-            <div className="flex items-center gap-2 text-gray-400">
-              <Cpu className="w-4 h-4 text-brand-orange" />
-              <span>AI Model:</span>
-              <strong className="text-white font-semibold">{prompt.aiModel}</strong>
-            </div>
-            <div className="flex items-center gap-2 text-gray-400">
-              <Layers className="w-4 h-4 text-brand-orange" />
-              <span>Type:</span>
-              <strong className="text-white font-semibold">{prompt.promptType}</strong>
-            </div>
-            <div className="flex items-center gap-2 text-gray-400">
-              <Calendar className="w-4 h-4 text-brand-orange" />
-              <span>Date:</span>
-              <strong className="text-white font-semibold">{prompt.createdAt}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* SAMPLE SECTION */}
-      <div className="bg-[#151B28] border border-emerald-900/50 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
-        <div className="space-y-1">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            🎬 See the Result
-          </h3>
-          <p className="text-sm text-gray-400">
-            Want to see what this prompt can create? Watch the real sample video in our WhatsApp Community.
-          </p>
-        </div>
-        <WatchSampleBtn promptTitle={prompt.title} className="w-full sm:w-auto" />
-      </div>
-
-      {/* PROMPT CONTENT SECTION */}
-      <div className="bg-[#151B28] border border-gray-800 rounded-2xl p-6 sm:p-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">Prompt Code</h3>
-          {isUnlocked && prompt.isPremium && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-800/40">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Unlocked / Purchased
-            </span>
-          )}
-        </div>
-
-        {isUnlocked ? (
-          /* UNLOCKED: কপি করার বাটনসহ সম্পূর্ণ প্রম্পট */
-          <div className="space-y-4">
-            <div className="p-4 sm:p-5 rounded-xl bg-[#0B0F17] border border-gray-800 font-mono text-sm text-gray-200 leading-relaxed break-words">
-              {prompt.promptContent}
-            </div>
-            <div className="flex justify-end">
-              <CopyButton textToCopy={prompt.promptContent} />
-            </div>
+      {/* Prompts Table */}
+      <div className="bg-[#151B28] border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
+        {loading ? (
+          <div className="p-12 text-center text-gray-400 text-sm">প্রম্পট তালিকা লোড হচ্ছে...</div>
+        ) : prompts.length === 0 ? (
+          <div className="p-12 text-center text-gray-400 text-sm space-y-3">
+            <p>ডাটাবেজে এখনো কোনো প্রম্পট যুক্ত করা হয়নি।</p>
+            <Link
+              href="/admin/prompts/new"
+              className="inline-block px-4 py-2 rounded-lg bg-brand-orange text-white text-xs font-bold"
+            >
+              প্রথম প্রম্পট যোগ করুন
+            </Link>
           </div>
         ) : (
-          /* LOCKED: তালা মারা বক্স এবং নিজস্ব দামসহ আনলক বাটন */
-          <div className="text-center py-10 px-4 bg-[#0B0F17] border border-gray-800 rounded-xl space-y-4">
-            <div className="w-12 h-12 rounded-full bg-brand-orange/10 flex items-center justify-center text-brand-orange mx-auto">
-              <Lock className="w-6 h-6" />
-            </div>
-            <h4 className="text-lg font-bold text-white">🔒 Premium Prompt</h4>
-            <p className="text-sm text-gray-400 max-w-md mx-auto">
-              Unlock this prompt for <strong>৳{prompt.price}</strong> to access the complete prompt and copy it directly to your clipboard.
-            </p>
-            <div className="pt-2">
-              <Link
-                href={`/checkout/${prompt.id}`}
-                className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-brand-orange hover:bg-brand-orangeHover transition-all shadow-lg shadow-brand-orange/25"
-              >
-                Unlock Premium (৳{prompt.price})
-              </Link>
-            </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-gray-300">
+              <thead className="bg-[#0B0F17] text-xs uppercase text-gray-400 border-b border-gray-800">
+                <tr>
+                  <th className="px-6 py-3.5">Prompt</th>
+                  <th className="px-6 py-3.5">Category</th>
+                  <th className="px-6 py-3.5">AI Model</th>
+                  <th className="px-6 py-3.5">Tier & Price</th>
+                  <th className="px-6 py-3.5">Status</th>
+                  <th className="px-6 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {prompts.map((p) => (
+                  <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={p.imageUrl}
+                          alt={p.title}
+                          className="w-12 h-9 object-cover rounded-lg border border-gray-700"
+                        />
+                        <div>
+                          <h4 className="font-bold text-white line-clamp-1">{p.title}</h4>
+                          <span className="text-xs text-gray-500 font-mono">{p.slug}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-xs font-semibold text-gray-300">
+                      {p.category?.name || "Uncategorized"}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-gray-400 font-medium">{p.aiModel}</td>
+                    <td className="px-6 py-4">
+                      {p.isPremium ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-brand-orange text-white">
+                            <Lock className="w-2.5 h-2.5" /> PREMIUM
+                          </span>
+                          <span className="text-xs font-bold text-brand-orange">
+                            ৳{Number(p.price || 0).toFixed(0)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white">
+                          <Sparkles className="w-2.5 h-2.5" /> FREE (৳০)
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`text-[11px] font-bold px-2 py-0.5 rounded uppercase ${
+                          p.status === "PUBLISHED"
+                            ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
+                            : "bg-gray-800 text-gray-400"
+                        }`}
+                      >
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      {/* View Link */}
+                      <Link
+                        href={`/prompt/${p.slug}`}
+                        target="_blank"
+                        className="inline-block p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                        title="View Prompt"
+                      >
+                        <ArrowUpRight className="w-4 h-4" />
+                      </Link>
+
+                      {/* Edit Button */}
+                      <Link
+                        href={`/admin/prompts/${p.id}/edit`}
+                        className="inline-block p-1.5 rounded-lg text-gray-400 hover:text-brand-orange hover:bg-brand-orange/10 transition-colors"
+                        title="Edit Prompt"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Link>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDelete(p.id, p.title)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/40 transition-colors"
+                        title="Delete Prompt"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
     </div>
   );
-    }
+}
