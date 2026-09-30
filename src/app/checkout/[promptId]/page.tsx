@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
 import { allPromptsData } from "@/lib/sample-data";
 
-export default function CheckoutPage({ params }: { params: Promise<{ promptId: string }> }) {
+export default function CheckoutPage() {
   const router = useRouter();
-  const { promptId } = use(params);
+  const params = useParams();
+  const promptId = params?.promptId as string;
 
   const [prompt, setPrompt] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<"bKash" | "Nagad" | "Card">("bKash");
@@ -18,7 +19,6 @@ export default function CheckoutPage({ params }: { params: Promise<{ promptId: s
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // ডাটাবেজ অথবা স্যাম্পল ডেটা থেকে প্রম্পটের আসল তথ্য ও নিজস্ব মূল্য আনা
   useEffect(() => {
     async function loadPromptDetails() {
       try {
@@ -39,7 +39,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ promptId: s
         setFetching(false);
       }
     }
-    loadPromptDetails();
+    if (promptId) {
+      loadPromptDetails();
+    }
   }, [promptId]);
 
   if (fetching) {
@@ -110,7 +112,6 @@ export default function CheckoutPage({ params }: { params: Promise<{ promptId: s
           </h1>
         </div>
 
-        {/* Order Summary Box with Exact Custom Price */}
         <div className="bg-[#0B0F17] border border-gray-800 rounded-xl p-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img
@@ -199,4 +200,4 @@ export default function CheckoutPage({ params }: { params: Promise<{ promptId: s
       </div>
     </div>
   );
-      }
+}
