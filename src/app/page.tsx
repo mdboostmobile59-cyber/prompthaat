@@ -4,12 +4,12 @@ import PromptCard from "@/components/shared/PromptCard";
 import { prisma } from "@/lib/prisma";
 import { popularPrompts, latestPrompts, freePrompts } from "@/lib/sample-data";
 
-export const revalidate = 60; // প্রতি ১ মিনিটে স্বয়ংক্রিয় রিফ্রেশ
+export const revalidate = 60;
 
 export default async function HomePage() {
-  let popular = popularPrompts;
-  let latest = latestPrompts;
-  let free = freePrompts;
+  let popular: any[] = popularPrompts;
+  let latest: any[] = latestPrompts;
+  let free: any[] = freePrompts;
 
   try {
     const dbPrompts = await prisma.prompt.findMany({
@@ -19,7 +19,7 @@ export default async function HomePage() {
       take: 20,
     });
 
-    if (dbPrompts.length > 0) {
+    if (dbPrompts && dbPrompts.length > 0) {
       const formatted = dbPrompts.map((p) => ({
         id: p.id,
         slug: p.slug,
@@ -40,7 +40,7 @@ export default async function HomePage() {
       if (dbFree.length > 0) free = dbFree.slice(0, 3);
     }
   } catch {
-    // ডাটাবেজ কানেক্ট না থাকলে আগের স্যাম্পল ডেটা কাজ করবে
+    // ফলব্যাক ডেটা কাজ করবে
   }
 
   return (
@@ -86,9 +86,7 @@ export default async function HomePage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2.5">
             <Flame className="w-6 h-6 text-brand-orange" />
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Popular Prompts
-            </h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">Popular Prompts</h2>
           </div>
           <Link
             href="/browse"
@@ -110,9 +108,7 @@ export default async function HomePage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2.5">
             <Sparkles className="w-6 h-6 text-brand-orange" />
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Latest Prompts
-            </h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">Latest Prompts</h2>
           </div>
           <Link
             href="/browse"
@@ -134,9 +130,7 @@ export default async function HomePage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2.5">
             <Gift className="w-6 h-6 text-brand-orange" />
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              Free Prompts
-            </h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">Free Prompts</h2>
           </div>
           <Link
             href="/browse?tier=Free"
