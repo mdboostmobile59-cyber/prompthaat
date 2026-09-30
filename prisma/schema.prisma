@@ -13,11 +13,86 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   name         String
-  email        String   @unique
+  email        String     @unique
   passwordHash String
-  role         Role     @default(USER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         Role       @default(USER)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  favorites    Favorite[]
+  purchases    Purchase[]
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  iconUrl     String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  prompts     Prompt[]
+}
+
+model Prompt {
+  id            String     @id @default(cuid())
+  title         String
+  slug          String     @unique
+  description   String     @db.Text
+  promptContent String     @db.Text
+  imageUrl      String
+  aiModel       String     // Veo, Kling, Sora, Midjourney, Gemini, etc.
+  promptType    String     @default("Image") // Video, Image, Story, Character, etc.
+  isPremium     Boolean    @default(false)
+  price         Decimal?   @default(0.0) @db.Decimal(10, 2) // প্রতিটি প্রম্পটের নিজস্ব মূল্য (৳)
+  isFeatured    Boolean    @default(false)
+  status        String     @default("PUBLISHED") // DRAFT, PUBLISHED
+  viewCount     Int        @default(0)
+  copyCount     Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  categoryId    String
+  category      Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  favorites     Favorite[]
+  purchases     Purchase[]
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  promptId  String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promptId])
+}
+
+model Purchase {
+  id            String   @id @default(cuid())
+  userId        String
+  promptId      String
+  amount        Decimal  @db.Decimal(10, 2)
+  paymentMethod String   // bKash, Nagad, Card
+  transactionId String   @unique
+  status        String   @default("COMPLETED")
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt        Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promptId])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g. "whatsapp_community_url"
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
 }
