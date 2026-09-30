@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, Lock, Sparkles } from "lucide-react";
+import FavoriteBtn from "./FavoriteBtn";
 
 export interface PromptCardProps {
   id: string;
@@ -13,6 +14,7 @@ export interface PromptCardProps {
 }
 
 export default function PromptCard({
+  id,
   slug,
   title,
   category,
@@ -22,7 +24,7 @@ export default function PromptCard({
   aiModel,
 }: PromptCardProps) {
   return (
-    <div className="group flex flex-col bg-[#151B28] border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-black/50">
+    <div className="group flex flex-col bg-[#151B28] border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition-all duration-300 hover:shadow-xl hover:shadow-black/50 relative">
       {/* Thumbnail Container */}
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-900">
         <img
@@ -32,8 +34,8 @@ export default function PromptCard({
           loading="lazy"
         />
 
-        {/* Free or Premium Badge */}
-        <div className="absolute top-3 left-3">
+        {/* Free or Premium Badge (উপরে বামে) */}
+        <div className="absolute top-3 left-3 z-10">
           {isPremium ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold uppercase rounded-md bg-brand-orange text-white shadow-md">
               <Lock className="w-3 h-3" />
@@ -47,7 +49,12 @@ export default function PromptCard({
           )}
         </div>
 
-        {/* AI Model Tag */}
+        {/* ❤️ Favorite Heart Button (উপরে একদম ডানদিকের কোনায়) */}
+        <div className="absolute top-3 right-3 z-20">
+          <FavoriteBtn promptId={id} />
+        </div>
+
+        {/* AI Model Tag (নিচে ডানে) */}
         {aiModel && (
           <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded text-[11px] font-medium text-gray-300">
             {aiModel}
