@@ -1,17 +1,34 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Video, ExternalLink } from "lucide-react";
-import { getWhatsAppCommunityUrl } from "@/lib/whatsapp";
 
 interface WatchSampleBtnProps {
   promptTitle?: string;
   className?: string;
 }
 
-export default function WatchSampleBtn({ promptTitle, className = "" }: WatchSampleBtnProps) {
+export default function WatchSampleBtn({ className = "" }: WatchSampleBtnProps) {
+  const [communityUrl, setCommunityUrl] = useState("https://chat.whatsapp.com/your-community-invite-link");
+
+  // ডাটাবেজের লাইভ লিংক ফেচ করা
+  useEffect(() => {
+    async function fetchUrl() {
+      try {
+        const res = await fetch("/api/settings/public");
+        const data = await res.json();
+        if (data.whatsappUrl) {
+          setCommunityUrl(data.whatsappUrl);
+        }
+      } catch {
+        // ফলব্যাক কাজ করবে
+      }
+    }
+    fetchUrl();
+  }, []);
+
   const handleOpenCommunity = () => {
-    const url = getWhatsAppCommunityUrl();
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(communityUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
