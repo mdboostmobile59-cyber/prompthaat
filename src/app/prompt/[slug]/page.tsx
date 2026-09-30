@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, Lock, Calendar, Layers, Cpu } from "lucide-react";
+import { ArrowLeft, Sparkles, Lock, Calendar, Layers, Cpu, CheckCircle2 } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
 import { allPromptsData } from "@/lib/sample-data";
 import WatchSampleBtn from "@/components/shared/WatchSampleBtn";
 import CopyButton from "@/components/shared/CopyButton";
@@ -11,15 +13,68 @@ interface PromptDetailsPageProps {
 
 export default async function PromptDetailsPage({ params }: PromptDetailsPageProps) {
   const { slug } = await params;
-  const prompt = allPromptsData.find((p) => p.slug === slug);
+  const user: any = await getCurrentUser();
 
+  let prompt: any = null;
+  let isUnlocked = false;
+
+  // ১. ডাটাবেজ থেকে প্রম্পট খোঁজা
+  try {
+    const dbPrompt = await prisma.prompt.findUnique({
+      where: { slug },
+      include: { category: true },
+    });
+
+    if (dbPrompt) {
+      prompt = {
+        id: dbPrompt.id,
+        slug: dbPrompt.slug,
+        title: dbPrompt.title,
+        category: dbPrompt.category?.name || "General",
+        description: dbPrompt.description,
+        promptContent: dbPrompt.promptContent,
+        imageUrl: dbPrompt.imageUrl,
+        aiModel: dbPrompt.aiModel,
+        promptType: dbPrompt.promptType,
+        isPremium: dbPrompt.isPremium,
+        price: Number(dbPrompt.price || 49),
+        createdAt: dbPrompt.createdAt.toISOString().split("T")[0],
+      };
+
+      // ইউজার কি ইতিমধ্যে এটি কিনেছেন?
+      if (user && dbPrompt.isPremium) {
+        const purchase = await prisma.purchase.findUnique({
+          where: {
+            userId_promptId: {
+              userId: user.userId,
+              promptId: dbPrompt.id,
+            },
+          },
+        });
+        if (purchase) isUnlocked = true;
+      }
+    }
+  } catch {
+    // ডাটাবেজে না পেলে ফলব্যাকে যাবে
+  }
+
+  // ২. ফলব্যাক চেক (যদি ডাটাবেজে না থাকে তবে ডামি ডেটা থেকে নেবে)
   if (!prompt) {
-    notFound();
+    const fallback = allPromptsData.find((p) => p.slug === slug);
+    if (!fallback) notFound();
+    prompt = {
+      ...fallback,
+      price: 49,
+    };
+  }
+
+  // যদি ফ্রি হয় তাহলে তো অলরেডি আনলকড
+  if (!prompt.isPremium) {
+    isUnlocked = true;
   }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
-      {/* Back button */}
       <div>
         <Link
           href="/browse"
@@ -29,9 +84,7 @@ export default async function PromptDetailsPage({ params }: PromptDetailsPagePro
         </Link>
       </div>
 
-      {/* Main Container */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        {/* Left: Large Thumbnail */}
         <div className="rounded-2xl overflow-hidden border border-gray-800 bg-gray-900 shadow-2xl">
           <img
             src={prompt.imageUrl}
@@ -40,7 +93,6 @@ export default async function PromptDetailsPage({ params }: PromptDetailsPagePro
           />
         </div>
 
-        {/* Right: Meta Information */}
         <div className="space-y-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -50,7 +102,7 @@ export default async function PromptDetailsPage({ params }: PromptDetailsPagePro
               <span className="text-gray-600">•</span>
               {prompt.isPremium ? (
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-brand-orange">
-                  <Lock className="w-3 h-3" /> PREMIUM
+                  <Lock className="w-3 h-3" /> PREMIUM (৳{prompt.price})
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400">
@@ -67,12 +119,11 @@ export default async function PromptDetailsPage({ params }: PromptDetailsPagePro
             {prompt.description}
           </p>
 
-          {/* Prompt Metadata Grid */}
           <div className="grid grid-cols-2 gap-3 bg-[#151B28] border border-gray-800 p-4 rounded-xl text-xs">
             <div className="flex items-center gap-2 text-gray-400">
               <Cpu className="w-4 h-4 text-brand-orange" />
               <span>AI Model:</span>
-              <strong className="text-white font-semibold">{prompt.aiModel || "Universal"}</strong>
+              <strong className="text-white font-semibold">{prompt.aiModel}</strong>
             </div>
             <div className="flex items-center gap-2 text-gray-400">
               <Layers className="w-4 h-4 text-brand-orange" />
@@ -88,7 +139,7 @@ export default async function PromptDetailsPage({ params }: PromptDetailsPagePro
         </div>
       </div>
 
-      {/* SAMPLE SECTION (ব্লুপ্রিন্ট সেকশন ৪ ও ৫ অনুযায়ী) */}
+      {/* SAMPLE SECTION */}
       <div className="bg-[#151B28] border border-emerald-900/50 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
         <div className="space-y-1">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -103,29 +154,17 @@ export default async function PromptDetailsPage({ params }: PromptDetailsPagePro
 
       {/* PROMPT CONTENT SECTION */}
       <div className="bg-[#151B28] border border-gray-800 rounded-2xl p-6 sm:p-8 space-y-6">
-        <h3 className="text-lg font-bold text-white">Prompt Code</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-white">Prompt Code</h3>
+          {isUnlocked && prompt.isPremium && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-800/40">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Unlocked / Purchased
+            </span>
+          )}
+        </div>
 
-        {prompt.isPremium ? (
-          /* PREMIUM LOCKED BOX */
-          <div className="text-center py-10 px-4 bg-[#0B0F17] border border-gray-800 rounded-xl space-y-4">
-            <div className="w-12 h-12 rounded-full bg-brand-orange/10 flex items-center justify-center text-brand-orange mx-auto">
-              <Lock className="w-6 h-6" />
-            </div>
-            <h4 className="text-lg font-bold text-white">🔒 Premium Prompt</h4>
-            <p className="text-sm text-gray-400 max-w-md mx-auto">
-              Unlock this prompt to access the complete prompt and copy it directly to your clipboard.
-            </p>
-            <div className="pt-2">
-              <Link
-                href={`/checkout/${prompt.id}`}
-                className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-brand-orange hover:bg-brand-orangeHover transition-all shadow-lg shadow-brand-orange/25"
-              >
-                Unlock Premium
-              </Link>
-            </div>
-          </div>
-        ) : (
-          /* FREE PROMPT UNLOCKED */
+        {isUnlocked ? (
+          /* UNLOCKED: কপি করার বাটনসহ সম্পূর্ণ প্রম্পট */
           <div className="space-y-4">
             <div className="p-4 sm:p-5 rounded-xl bg-[#0B0F17] border border-gray-800 font-mono text-sm text-gray-200 leading-relaxed break-words">
               {prompt.promptContent}
@@ -134,8 +173,27 @@ export default async function PromptDetailsPage({ params }: PromptDetailsPagePro
               <CopyButton textToCopy={prompt.promptContent} />
             </div>
           </div>
+        ) : (
+          /* LOCKED: তালা মারা বক্স এবং নিজস্ব দামসহ আনলক বাটন */
+          <div className="text-center py-10 px-4 bg-[#0B0F17] border border-gray-800 rounded-xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-brand-orange/10 flex items-center justify-center text-brand-orange mx-auto">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h4 className="text-lg font-bold text-white">🔒 Premium Prompt</h4>
+            <p className="text-sm text-gray-400 max-w-md mx-auto">
+              Unlock this prompt for <strong>৳{prompt.price}</strong> to access the complete prompt and copy it directly to your clipboard.
+            </p>
+            <div className="pt-2">
+              <Link
+                href={`/checkout/${prompt.id}`}
+                className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl font-bold text-sm text-white bg-brand-orange hover:bg-brand-orangeHover transition-all shadow-lg shadow-brand-orange/25"
+              >
+                Unlock Premium (৳{prompt.price})
+              </Link>
+            </div>
+          </div>
         )}
       </div>
     </div>
   );
-}
+    }
