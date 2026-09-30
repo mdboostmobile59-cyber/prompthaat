@@ -9,9 +9,11 @@ interface WatchSampleBtnProps {
 }
 
 export default function WatchSampleBtn({ className = "" }: WatchSampleBtnProps) {
-  const [communityUrl, setCommunityUrl] = useState("https://chat.whatsapp.com/your-community-invite-link");
+  const [communityUrl, setCommunityUrl] = useState(
+    "https://chat.whatsapp.com/your-community-invite-link"
+  );
 
-  // ডাটাবেজের লাইভ লিংক ফেচ করা
+  // ডাটাবেজ থেকে লাইভ হোয়াটসঅ্যাপ লিংক সংগ্রহ করা
   useEffect(() => {
     async function fetchUrl() {
       try {
@@ -21,7 +23,7 @@ export default function WatchSampleBtn({ className = "" }: WatchSampleBtnProps) 
           setCommunityUrl(data.whatsappUrl);
         }
       } catch {
-        // ফলব্যাক কাজ করবে
+        // কোনো সমস্যা হলে ডিফল্ট লিংক কাজ করবে
       }
     }
     fetchUrl();
