@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Heart } from "lucide-react";
 import PromptCard from "@/components/shared/PromptCard";
-import { allPromptsData } from "@/lib/sample-data";
+import { allPromptsData, FullPrompt } from "@/lib/sample-data";
 
 export default async function FavoritesPage() {
   const user: any = await getCurrentUser();
@@ -13,7 +13,6 @@ export default async function FavoritesPage() {
   let savedPrompts: any[] = [];
 
   try {
-    // সরাসরি ডাটাবেজ থেকে প্রম্পটসহ ফেভারিট তথ্য আনা
     const dbFavorites = await prisma.favorite.findMany({
       where: { userId: user.userId },
       include: {
@@ -26,7 +25,7 @@ export default async function FavoritesPage() {
       orderBy: { createdAt: "desc" },
     });
 
-    if (dbFavorites.length > 0) {
+    if (dbFavorites && dbFavorites.length > 0) {
       savedPrompts = dbFavorites
         .filter((f) => f.prompt !== null)
         .map((f) => ({
@@ -41,10 +40,10 @@ export default async function FavoritesPage() {
         }));
     }
 
-    // টাইপ এরর মুক্ত নিরাপদ ফলব্যাক
-    if (savedPrompts.length === 0 && dbFavorites.length > 0) {
+    // fallback when prompt IDs refer to sample prompts
+    if (savedPrompts.length === 0 && dbFavorites && dbFavorites.length > 0) {
       const favIds = new Set(dbFavorites.map((f) => f.promptId));
-      savedPrompts = (allPromptsData as any[]).filter((p: any) => favIds.has(p.id));
+      savedPrompts = allPromptsData.filter((p: FullPrompt) => favIds.has(p.id));
     }
   } catch (error) {
     console.error("Failed to load user favorites from DB:", error);
