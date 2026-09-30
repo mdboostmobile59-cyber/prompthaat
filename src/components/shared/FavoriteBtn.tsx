@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Heart } from "lucide-react";
 
 interface FavoriteBtnProps {
@@ -10,7 +9,6 @@ interface FavoriteBtnProps {
 }
 
 export default function FavoriteBtn({ promptId, initialFavorite = false }: FavoriteBtnProps) {
-  const router = useRouter();
   const [isFav, setIsFav] = useState(initialFavorite);
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +16,13 @@ export default function FavoriteBtn({ promptId, initialFavorite = false }: Favor
     e.preventDefault();
     e.stopPropagation();
 
+    if (loading) return;
+
+    // ক্লিক করার সাথে সাথেই স্ক্রিনে রঙ পরিবর্তন হবে
+    const nextState = !isFav;
+    setIsFav(nextState);
     setLoading(true);
+
     try {
       const res = await fetch("/api/favorites/toggle", {
         method: "POST",
@@ -26,15 +30,21 @@ export default function FavoriteBtn({ promptId, initialFavorite = false }: Favor
         body: JSON.stringify({ promptId }),
       });
 
+      if (res.status === 401) {
+        // লগইন না থাকলে সরাসরি লগইন পেজে নিয়ে যাবে
+        setIsFav(false);
+        window.location.href = `/login?callbackUrl=/browse`;
+        return;
+      }
+
       const data = await res.json();
       if (res.ok) {
         setIsFav(data.isFavorite);
-      } else if (res.status === 401) {
-        // লগইন না থাকলে সরাসরি লগইন পেজে নিয়ে যাবে
-        router.push("/login");
+      } else {
+        setIsFav(!nextState);
       }
     } catch {
-      // নেটওয়ার্ক ফেইল হলে পরিবর্তন হবে না
+      setIsFav(!nextState);
     } finally {
       setLoading(false);
     }
@@ -44,14 +54,15 @@ export default function FavoriteBtn({ promptId, initialFavorite = false }: Favor
     <button
       onClick={toggleFavorite}
       disabled={loading}
-      className={`p-2 rounded-full backdrop-blur-md transition-all ${
+      type="button"
+      className={`p-2 rounded-full backdrop-blur-md transition-all active:scale-90 shadow-lg ${
         isFav
-          ? "bg-red-500/20 text-red-500 border border-red-500/40"
-          : "bg-black/40 text-gray-300 hover:text-white hover:bg-black/60 border border-white/10"
+          ? "bg-red-500 text-white shadow-red-500/50"
+          : "bg-black/70 text-gray-200 hover:text-white hover:bg-black/90 border border-white/20"
       }`}
       title={isFav ? "Remove Favorite" : "Save to Favorites"}
     >
-      <Heart className={`w-4 h-4 ${isFav ? "fill-red-500" : ""}`} />
+      <Heart className={`w-4 h-4 ${isFav ? "fill-white text-white" : ""}`} />
     </button>
   );
 }
