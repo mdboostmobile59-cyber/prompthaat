@@ -1,14 +1,52 @@
 import Link from "next/link";
 import { ArrowRight, Flame, Sparkles, Gift } from "lucide-react";
 import PromptCard from "@/components/shared/PromptCard";
+import { prisma } from "@/lib/prisma";
 import { popularPrompts, latestPrompts, freePrompts } from "@/lib/sample-data";
 
-export default function HomePage() {
+export const revalidate = 60; // প্রতি ১ মিনিটে স্বয়ংক্রিয় রিফ্রেশ
+
+export default async function HomePage() {
+  let popular = popularPrompts;
+  let latest = latestPrompts;
+  let free = freePrompts;
+
+  try {
+    const dbPrompts = await prisma.prompt.findMany({
+      where: { status: "PUBLISHED" },
+      include: { category: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+
+    if (dbPrompts.length > 0) {
+      const formatted = dbPrompts.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        title: p.title,
+        category: p.category?.name || "General",
+        description: p.description,
+        imageUrl: p.imageUrl,
+        isPremium: p.isPremium,
+        aiModel: p.aiModel,
+      }));
+
+      const dbFeatured = formatted.filter((_, idx) => idx < 3);
+      const dbLatest = formatted.slice(0, 6);
+      const dbFree = formatted.filter((p) => !p.isPremium);
+
+      if (dbFeatured.length > 0) popular = dbFeatured;
+      if (dbLatest.length > 0) latest = dbLatest.slice(0, 3);
+      if (dbFree.length > 0) free = dbFree.slice(0, 3);
+    }
+  } catch {
+    // ডাটাবেজ কানেক্ট না থাকলে আগের স্যাম্পল ডেটা কাজ করবে
+  }
+
   return (
     <div className="space-y-20 pb-16">
       {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden pt-20 pb-16 md:pt-28 md:pb-24 text-center px-4">
-        {/* Subtle Background Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-orange/15 blur-[120px] rounded-full pointer-events-none -z-10" />
 
         <div className="max-w-4xl mx-auto space-y-6">
@@ -34,7 +72,7 @@ export default function HomePage() {
               Browse Prompts
             </Link>
             <Link
-              href="/premium"
+              href="/browse?tier=Premium"
               className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-base font-bold text-gray-200 bg-gray-800/80 hover:bg-gray-700 hover:text-white transition-all border border-gray-700"
             >
               Explore Premium
@@ -53,7 +91,7 @@ export default function HomePage() {
             </h2>
           </div>
           <Link
-            href="/browse?filter=popular"
+            href="/browse"
             className="text-sm font-semibold text-brand-orange hover:underline inline-flex items-center gap-1"
           >
             View More <ArrowRight className="w-4 h-4" />
@@ -61,7 +99,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {popularPrompts.map((prompt) => (
+          {popular.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}
         </div>
@@ -77,7 +115,7 @@ export default function HomePage() {
             </h2>
           </div>
           <Link
-            href="/browse?filter=latest"
+            href="/browse"
             className="text-sm font-semibold text-brand-orange hover:underline inline-flex items-center gap-1"
           >
             View More <ArrowRight className="w-4 h-4" />
@@ -85,7 +123,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {latestPrompts.map((prompt) => (
+          {latest.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}
         </div>
@@ -101,7 +139,7 @@ export default function HomePage() {
             </h2>
           </div>
           <Link
-            href="/browse?filter=free"
+            href="/browse?tier=Free"
             className="text-sm font-semibold text-brand-orange hover:underline inline-flex items-center gap-1"
           >
             View More <ArrowRight className="w-4 h-4" />
@@ -109,7 +147,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {freePrompts.map((prompt) => (
+          {free.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}
         </div>
