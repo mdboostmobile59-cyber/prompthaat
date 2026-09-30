@@ -1,6 +1,15 @@
 import { PromptCardProps } from "@/components/shared/PromptCard";
 
+// explicitly include id and all core prompt fields for 100% strict type safety
 export interface FullPrompt extends PromptCardProps {
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  imageUrl: string;
+  isPremium: boolean;
+  aiModel?: string;
   promptContent: string;
   promptType: "Video" | "Image" | "Story" | "Character";
   createdAt: string;
