@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Layers, Plus, Trash2, Sparkles, Lock, ArrowUpRight } from "lucide-react";
+import { Layers, Plus, Trash2, Sparkles, Lock, ArrowUpRight, Edit } from "lucide-react";
 
 export default function AdminPromptsPage() {
   const [prompts, setPrompts] = useState<any[]>([]);
@@ -51,7 +51,7 @@ export default function AdminPromptsPage() {
             Prompt Management
           </h1>
           <p className="text-sm text-gray-400 mt-1">
-            ওয়েবসাইটের সব প্রম্পট পরিচালনা করুন অথবা নতুন প্রম্পট তৈরি করুন।
+            ওয়েবসাইটের সব প্রম্পট পরিচালনা ও এডিট করুন।
           </p>
         </div>
 
@@ -139,6 +139,7 @@ export default function AdminPromptsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
+                      {/* View Link */}
                       <Link
                         href={`/prompt/${p.slug}`}
                         target="_blank"
@@ -147,6 +148,17 @@ export default function AdminPromptsPage() {
                       >
                         <ArrowUpRight className="w-4 h-4" />
                       </Link>
+
+                      {/* Edit Button (পেন্সিল আইকন) */}
+                      <Link
+                        href={`/admin/prompts/${p.id}/edit`}
+                        className="inline-block p-1.5 rounded-lg text-gray-400 hover:text-brand-orange hover:bg-brand-orange/10 transition-colors"
+                        title="Edit Prompt"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Link>
+
+                      {/* Delete Button */}
                       <button
                         onClick={() => handleDelete(p.id, p.title)}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/40 transition-colors"
@@ -164,4 +176,4 @@ export default function AdminPromptsPage() {
       </div>
     </div>
   );
-                      }
+}
