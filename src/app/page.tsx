@@ -1,48 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, Flame, Sparkles, Gift } from "lucide-react";
 import PromptCard from "@/components/shared/PromptCard";
-import { prisma } from "@/lib/prisma";
 import { popularPrompts, latestPrompts, freePrompts } from "@/lib/sample-data";
 
-export const revalidate = 60;
-
-export default async function HomePage() {
-  let popular: any[] = popularPrompts;
-  let latest: any[] = latestPrompts;
-  let free: any[] = freePrompts;
-
-  try {
-    const dbPrompts = await prisma.prompt.findMany({
-      where: { status: "PUBLISHED" },
-      include: { category: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    });
-
-    if (dbPrompts && dbPrompts.length > 0) {
-      const formatted = dbPrompts.map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        title: p.title,
-        category: p.category?.name || "General",
-        description: p.description,
-        imageUrl: p.imageUrl,
-        isPremium: p.isPremium,
-        aiModel: p.aiModel,
-      }));
-
-      const dbFeatured = formatted.filter((_, idx) => idx < 3);
-      const dbLatest = formatted.slice(0, 6);
-      const dbFree = formatted.filter((p) => !p.isPremium);
-
-      if (dbFeatured.length > 0) popular = dbFeatured;
-      if (dbLatest.length > 0) latest = dbLatest.slice(0, 3);
-      if (dbFree.length > 0) free = dbFree.slice(0, 3);
-    }
-  } catch {
-    // ফলব্যাক ডেটা কাজ করবে
-  }
-
+export default function HomePage() {
   return (
     <div className="space-y-20 pb-16">
       {/* 1. HERO SECTION */}
@@ -97,7 +58,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {popular.map((prompt) => (
+          {popularPrompts.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}
         </div>
@@ -119,7 +80,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {latest.map((prompt) => (
+          {latestPrompts.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}
         </div>
@@ -141,7 +102,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {free.map((prompt) => (
+          {freePrompts.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}
         </div>
