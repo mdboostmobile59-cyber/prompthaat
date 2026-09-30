@@ -29,11 +29,12 @@ export default function CheckoutPage() {
         if (found) {
           setPrompt(found);
         } else {
-          const fallback = allPromptsData.find((p) => p.id === promptId);
+          // টাইপ এরর মুক্ত নিরাপদ ফলব্যাক
+          const fallback = (allPromptsData as any[]).find((p: any) => p.id === promptId || p.slug === promptId);
           setPrompt(fallback ? { ...fallback, price: 49 } : null);
         }
       } catch {
-        const fallback = allPromptsData.find((p) => p.id === promptId);
+        const fallback = (allPromptsData as any[]).find((p: any) => p.id === promptId || p.slug === promptId);
         setPrompt(fallback ? { ...fallback, price: 49 } : null);
       } finally {
         setFetching(false);
@@ -87,7 +88,7 @@ export default function CheckoutPage() {
         }, 1500);
       }
     } catch {
-      setError("সার্ভারে সমস্যা হচ্ছে, পুনরায় চেষ্টা করুন");
+      setError("সার্ভারে সমস্যা হয়েছে, পুনরায় চেষ্টা করুন");
     } finally {
       setLoading(false);
     }
@@ -200,4 +201,4 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
-}
+                                                           }
