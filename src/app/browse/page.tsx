@@ -1,41 +1,61 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import PromptCard from "@/components/shared/PromptCard";
-import { allPromptsData, CATEGORIES } from "@/lib/sample-data";
+import { CATEGORIES } from "@/lib/sample-data";
 
 export default function BrowsePage() {
+  const [prompts, setPrompts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>(CATEGORIES);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<"All" | "Free" | "Premium">("All");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [loading, setLoading] = useState(true);
 
-  const filteredPrompts = useMemo(() => {
-    return allPromptsData.filter((prompt) => {
-      // 1. Search Query filter
-      const matchesSearch =
-        prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prompt.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prompt.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (prompt.aiModel && prompt.aiModel.toLowerCase().includes(searchQuery.toLowerCase()));
+  // ক্যাটাগরি লোড করা
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const res = await fetch("/api/admin/categories");
+        const data = await res.json();
+        if (data.categories && data.categories.length > 0) {
+          const dbCatNames = data.categories.map((c: any) => c.name);
+          setCategories(["All Categories", ...dbCatNames]);
+        }
+      } catch {
+        // ফলব্যাক ক্যাটাগরি কাজ করবে
+      }
+    }
+    loadCategories();
+  }, []);
 
-      // 2. Free / Premium filter
-      const matchesTier =
-        selectedFilter === "All" ||
-        (selectedFilter === "Free" && !prompt.isPremium) ||
-        (selectedFilter === "Premium" && prompt.isPremium);
+  // প্রম্পট লোড করা
+  useEffect(() => {
+    async function fetchPrompts() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (searchQuery) params.set("search", searchQuery);
+        if (selectedFilter !== "All") params.set("tier", selectedFilter);
+        if (selectedCategory !== "All Categories") params.set("category", selectedCategory);
 
-      // 3. Category filter
-      const matchesCategory =
-        selectedCategory === "All Categories" || prompt.category === selectedCategory;
+        const res = await fetch(`/api/prompts?${params.toString()}`);
+        const data = await res.json();
+        if (data.prompts) setPrompts(data.prompts);
+      } catch {
+        console.error("Failed to load prompts");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-      return matchesSearch && matchesTier && matchesCategory;
-    });
+    const timer = setTimeout(fetchPrompts, 300);
+    return () => clearTimeout(timer);
   }, [searchQuery, selectedFilter, selectedCategory]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Title & Subtitle */}
       <div>
         <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
           All Prompts
@@ -47,7 +67,6 @@ export default function BrowsePage() {
 
       {/* Search & Tier Filters */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-[#151B28] border border-gray-800 p-4 rounded-2xl">
-        {/* Search Input */}
         <div className="relative w-full md:w-96">
           <Search className="w-5 h-5 text-gray-500 absolute left-3.5 top-3" />
           <input
@@ -59,7 +78,6 @@ export default function BrowsePage() {
           />
         </div>
 
-        {/* Free / Premium Tabs */}
         <div className="flex items-center gap-1.5 w-full md:w-auto bg-[#0B0F17] p-1.5 rounded-xl border border-gray-800">
           {(["All", "Free", "Premium"] as const).map((filter) => (
             <button
@@ -83,7 +101,7 @@ export default function BrowsePage() {
           <SlidersHorizontal className="w-3.5 h-3.5" />
           Categories:
         </div>
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
@@ -99,9 +117,11 @@ export default function BrowsePage() {
       </div>
 
       {/* Prompts Grid */}
-      {filteredPrompts.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-20 text-gray-400 text-sm">প্রম্পট খোঁজা হচ্ছে...</div>
+      ) : prompts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-          {filteredPrompts.map((prompt) => (
+          {prompts.map((prompt) => (
             <PromptCard key={prompt.id} {...prompt} />
           ))}
         </div>
