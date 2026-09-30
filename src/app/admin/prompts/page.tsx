@@ -83,7 +83,7 @@ export default function AdminPromptsPage() {
             <table className="w-full text-left text-sm text-gray-300">
               <thead className="bg-[#0B0F17] text-xs uppercase text-gray-400 border-b border-gray-800">
                 <tr>
-                  <th className="px-6 py-3.5">Prompt</th>
+                  <th className="px-6 py-3.5">Prompt Title</th>
                   <th className="px-6 py-3.5">Category</th>
                   <th className="px-6 py-3.5">AI Model</th>
                   <th className="px-6 py-3.5">Tier & Price</th>
@@ -94,23 +94,32 @@ export default function AdminPromptsPage() {
               <tbody className="divide-y divide-gray-800">
                 {prompts.map((p) => (
                   <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                    {/* টাইটেলে চাপ দিলেও এডিট পেজ খুলবে */}
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                      <Link
+                        href={`/admin/prompts/${p.id}/edit`}
+                        className="flex items-center gap-3 group"
+                      >
                         <img
                           src={p.imageUrl}
                           alt={p.title}
-                          className="w-12 h-9 object-cover rounded-lg border border-gray-700"
+                          className="w-12 h-9 object-cover rounded-lg border border-gray-700 group-hover:border-brand-orange"
                         />
                         <div>
-                          <h4 className="font-bold text-white line-clamp-1">{p.title}</h4>
+                          <h4 className="font-bold text-white group-hover:text-brand-orange transition-colors line-clamp-1">
+                            {p.title}
+                          </h4>
                           <span className="text-xs text-gray-500 font-mono">{p.slug}</span>
                         </div>
-                      </div>
+                      </Link>
                     </td>
+
                     <td className="px-6 py-4 text-xs font-semibold text-gray-300">
                       {p.category?.name || "Uncategorized"}
                     </td>
+
                     <td className="px-6 py-4 text-xs text-gray-400 font-medium">{p.aiModel}</td>
+
                     <td className="px-6 py-4">
                       {p.isPremium ? (
                         <div className="flex items-center gap-1.5">
@@ -127,6 +136,7 @@ export default function AdminPromptsPage() {
                         </span>
                       )}
                     </td>
+
                     <td className="px-6 py-4">
                       <span
                         className={`text-[11px] font-bold px-2 py-0.5 rounded uppercase ${
@@ -138,34 +148,26 @@ export default function AdminPromptsPage() {
                         {p.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      {/* View Link */}
-                      <Link
-                        href={`/prompt/${p.slug}`}
-                        target="_blank"
-                        className="inline-block p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
-                        title="View Prompt"
-                      >
-                        <ArrowUpRight className="w-4 h-4" />
-                      </Link>
 
-                      {/* Edit Button (পেন্সিল আইকন) */}
-                      <Link
-                        href={`/admin/prompts/${p.id}/edit`}
-                        className="inline-block p-1.5 rounded-lg text-gray-400 hover:text-brand-orange hover:bg-brand-orange/10 transition-colors"
-                        title="Edit Prompt"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Link>
+                    {/* স্পষ্ট বাটন: [ Edit ] [ Delete ] */}
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/prompts/${p.id}/edit`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-sm"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </Link>
 
-                      {/* Delete Button */}
-                      <button
-                        onClick={() => handleDelete(p.id, p.title)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-950/40 transition-colors"
-                        title="Delete Prompt"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        <button
+                          onClick={() => handleDelete(p.id, p.title)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-red-200 bg-red-950/60 hover:bg-red-800 border border-red-800 transition-colors shadow-sm"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
