@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck, CheckCircle2, AlertCircle } from "lucide-react";
-import { allPromptsData } from "@/lib/sample-data";
+import { allPromptsData, FullPrompt } from "@/lib/sample-data";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -29,12 +29,11 @@ export default function CheckoutPage() {
         if (found) {
           setPrompt(found);
         } else {
-          // টাইপ এরর মুক্ত নিরাপদ ফলব্যাক
-          const fallback = (allPromptsData as any[]).find((p: any) => p.id === promptId || p.slug === promptId);
+          const fallback = allPromptsData.find((p: FullPrompt) => p.id === promptId || p.slug === promptId);
           setPrompt(fallback ? { ...fallback, price: 49 } : null);
         }
       } catch {
-        const fallback = (allPromptsData as any[]).find((p: any) => p.id === promptId || p.slug === promptId);
+        const fallback = allPromptsData.find((p: FullPrompt) => p.id === promptId || p.slug === promptId);
         setPrompt(fallback ? { ...fallback, price: 49 } : null);
       } finally {
         setFetching(false);
@@ -201,4 +200,4 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
-                                                           }
+}
