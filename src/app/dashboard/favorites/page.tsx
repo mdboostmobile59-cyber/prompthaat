@@ -1,93 +1,10 @@
-import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Heart } from "lucide-react";
+"use client";
+import { useEffect, useState } from "react";
 import PromptCard from "@/components/shared/PromptCard";
-import { allPromptsData, FullPrompt } from "@/lib/sample-data";
-
-export default async function FavoritesPage() {
-  const user: any = await getCurrentUser();
-  if (!user) redirect("/login");
-
-  let savedPrompts: any[] = [];
-
-  try {
-    const dbFavorites = await prisma.favorite.findMany({
-      where: { userId: user.userId },
-      include: {
-        prompt: {
-          include: {
-            category: { select: { name: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (dbFavorites && dbFavorites.length > 0) {
-      savedPrompts = dbFavorites
-        .filter((f) => f.prompt !== null)
-        .map((f) => ({
-          id: f.prompt.id,
-          slug: f.prompt.slug,
-          title: f.prompt.title,
-          category: f.prompt.category?.name || "General",
-          description: f.prompt.description,
-          imageUrl: f.prompt.imageUrl,
-          isPremium: f.prompt.isPremium,
-          aiModel: f.prompt.aiModel,
-        }));
-    }
-
-    // fallback when prompt IDs refer to sample prompts
-    if (savedPrompts.length === 0 && dbFavorites && dbFavorites.length > 0) {
-      const favIds = new Set(dbFavorites.map((f) => f.promptId));
-      savedPrompts = allPromptsData.filter((p: FullPrompt) => favIds.has(p.id));
-    }
-  } catch (error) {
-    console.error("Failed to load user favorites from DB:", error);
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-      <div>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-4"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-        </Link>
-        <h1 className="text-3xl font-black text-white flex items-center gap-3">
-          <Heart className="w-8 h-8 text-pink-500 fill-pink-500" />
-          My Favorite Prompts
-        </h1>
-        <p className="text-sm text-gray-400 mt-1">
-          Quickly access the prompts you saved for your upcoming projects.
-        </p>
-      </div>
-
-      {savedPrompts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {savedPrompts.map((prompt) => (
-            <PromptCard key={prompt.id} {...prompt} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 bg-[#151B28] border border-gray-800 rounded-2xl space-y-4">
-          <Heart className="w-12 h-12 text-gray-600 mx-auto" />
-          <h3 className="text-lg font-bold text-white">আপনার পছন্দের তালিকা এখনো খালি</h3>
-          <p className="text-sm text-gray-400 max-w-sm mx-auto">
-            যেকোনো প্রম্পটের হার্ট (❤️) আইকনে ক্লিক করে সহজেই এই তালিকায় জমা রাখতে পারেন।
-          </p>
-          <Link
-            href="/browse"
-            className="inline-block px-6 py-2.5 rounded-lg bg-brand-orange text-white text-sm font-semibold shadow-md"
-          >
-            Explore Prompts
-          </Link>
-        </div>
-      )}
-    </div>
-  );
+export default function FavoritesPage(){ const [items,setItems]=useState<any[]>([]); const [filter,setFilter]=useState("All");
+  useEffect(()=>{ fetch("/api/favorites").then(r=>r.json()).then(d=>setItems(d.favorites||[])); },[]);
+  const shown=items.filter(p=>filter==="All"||(filter==="Premium"?p.isPremium:!p.isPremium));
+  return <div className="max-w-7xl mx-auto px-4 py-10"><h1 className="text-3xl font-black">❤️ My Favorites</h1>
+  <div className="flex gap-2 mt-5">{["All","Free","Premium"].map(f=><button key={f} onClick={()=>setFilter(f)} className={`px-4 py-2 rounded-full text-sm font-bold ${filter===f?"bg-[#FF6B00] text-white":"card"}`}>{f}</button>)}</div>
+  {shown.length?<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">{shown.map((p:any)=><PromptCard key={p.id} {...p}/>)}</div>:<div className="card rounded-2xl p-10 text-center muted mt-8">No favorites yet. <a href="/browse" className="text-[#FF6B00] font-bold">Browse Prompts →</a></div>}</div>;
 }

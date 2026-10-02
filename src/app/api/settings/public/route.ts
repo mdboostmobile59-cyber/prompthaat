@@ -1,23 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
-export async function GET() {
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: "whatsapp_community_url" },
-    });
-
-    const fallbackUrl =
-      process.env.NEXT_PUBLIC_WHATSAPP_COMMUNITY_URL ||
-      "https://chat.whatsapp.com/your-community-invite-link";
-
-    return NextResponse.json({
-      whatsappUrl: setting?.value || fallbackUrl,
-    });
-  } catch (error) {
-    console.error("Public Settings API Error:", error);
-    return NextResponse.json({
-      whatsappUrl: "https://chat.whatsapp.com/your-community-invite-link",
-    });
-  }
+import { getSettings } from "@/lib/settings";
+export async function GET(){
+  const s=await getSettings(["whatsapp_community_url","whatsapp_community_name","vip_price","vip_enabled","website_name"]);
+  return NextResponse.json({whatsappUrl:s.whatsapp_community_url,whatsappName:s.whatsapp_community_name,vipPrice:Number(s.vip_price||999),vipEnabled:s.vip_enabled!=="false",websiteName:s.website_name});
 }

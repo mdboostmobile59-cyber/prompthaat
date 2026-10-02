@@ -1,122 +1,72 @@
 import Link from "next/link";
-import { ArrowRight, Flame, Sparkles, Gift } from "lucide-react";
+import { ArrowRight, Flame, Sparkles, Gift, Crown } from "lucide-react";
 import PromptCard from "@/components/shared/PromptCard";
-import { popularPrompts, latestPrompts, freePrompts } from "@/lib/sample-data";
-
-export default function HomePage() {
-  return (
-    <div className="space-y-20 pb-16">
-      {/* 1. HERO SECTION */}
-      <section className="relative overflow-hidden pt-20 pb-16 md:pt-28 md:pb-24 text-center px-4">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-orange/15 blur-[120px] rounded-full pointer-events-none -z-10" />
-
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-orange/10 border border-brand-orange/20 text-brand-orange text-xs font-semibold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
-            AI Video & Image Marketplace
+import { getPrompts, getCategories, minPremiumPrice } from "@/lib/prompts";
+import { getSettings } from "@/lib/settings";
+export const dynamic="force-dynamic";
+export default async function HomePage(){
+  const [all,free,premium,featured,cats,settings,minPrice]=await Promise.all([
+    getPrompts({take:6,sort:"popular"}), getPrompts({tier:"Free",take:6}), getPrompts({tier:"Premium",take:6}), getPrompts({featured:true,take:6}), getCategories(), getSettings(["hero_headline","hero_subtext","vip_price","vip_enabled"]), minPremiumPrice()
+  ]);
+  const latest=await getPrompts({take:6});
+  const heroPrompts=all.slice(0,4);
+  const vipPrice=settings.vip_price||"999";
+  return <div className="pb-16">
+    {/* HERO v2 */}
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 md:pt-16 pb-12">
+      <div className="grid lg:grid-cols-2 gap-10 items-center">
+        <div>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-[#FF6B00] text-[11px] font-extrabold tracking-widest">✦ AI PROMPTS MARKETPLACE</span>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.02] mt-5">Powerful AI Prompts.<br/><span className="text-[#FF6B00]">Better Results.</span></h1>
+          <p className="muted text-base sm:text-lg mt-4 max-w-xl">{settings.hero_subtext}</p>
+          <form action="/browse" className="flex mt-6 bg-white dark:bg-white rounded-full overflow-hidden border border-gray-300 shadow-lg max-w-xl">
+            <input name="q" placeholder="Search prompts, categories, or AI models..." className="flex-1 px-5 py-3.5 text-sm text-black outline-none min-w-0"/>
+            <button className="bg-[#FF6B00] hover:bg-[#E05E00] text-white font-bold px-6 text-sm">Search</button>
+          </form>
+          <div className="flex flex-wrap gap-3 mt-5">
+            <Link href="/browse" className="btn-orange">Browse Prompts →</Link>
+            <Link href="/premium" className="inline-flex items-center px-5 py-3 rounded-xl font-bold border border-gray-300 dark:border-gray-700">Explore Premium →</Link>
           </div>
-
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-tight">
-            Create Better AI Content with{" "}
-            <span className="text-brand-orange">Better Prompts</span>
-          </h1>
-
-          <p className="text-base sm:text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
-            Discover ready-to-use AI prompts for images, videos, storytelling and creative content.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link
-              href="/browse"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-base font-bold text-white bg-brand-orange hover:bg-brand-orangeHover transition-all shadow-lg shadow-brand-orange/25"
-            >
-              Browse Prompts
-            </Link>
-            <Link
-              href="/browse?tier=Premium"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-lg text-base font-bold text-gray-200 bg-gray-800/80 hover:bg-gray-700 hover:text-white transition-all border border-gray-700"
-            >
-              Explore Premium
-            </Link>
-          </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-xs font-bold muted"><span>🎁 Free Prompts</span><span>🔥 Premium from ৳{minPrice}</span><span>🎬 Sample Videos on WhatsApp</span>{settings.vip_enabled!=="false" && <span className="text-[#FF6B00]">👑 VIP All-Access ৳{vipPrice}</span>}</div>
         </div>
-      </section>
-
-      {/* 2. POPULAR PROMPTS SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2.5">
-            <Flame className="w-6 h-6 text-brand-orange" />
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Popular Prompts</h2>
-          </div>
-          <Link
-            href="/browse"
-            className="text-sm font-semibold text-brand-orange hover:underline inline-flex items-center gap-1"
-          >
-            View More <ArrowRight className="w-4 h-4" />
-          </Link>
+        <div className="grid grid-cols-2 gap-3">
+          {heroPrompts.map(p=><PromptCard key={p.id} {...p}/>)}
         </div>
+      </div>
+    </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {popularPrompts.map((prompt) => (
-            <PromptCard key={prompt.id} {...prompt} />
-          ))}
-        </div>
-      </section>
+    {/* CATEGORIES */}
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex justify-between items-center mb-6"><h2 className="text-2xl sm:text-3xl font-black">Popular Categories</h2><Link href="/categories" className="text-sm font-bold text-[#FF6B00] inline-flex items-center gap-1">View All <ArrowRight className="w-4 h-4"/></Link></div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {cats.slice(0,10).map(c=><Link key={c.slug} href={`/browse?category=${encodeURIComponent(c.name)}`} className="card rounded-xl p-4 hover:border-[#FF6B00] transition"><div className="font-bold text-sm">{c.name}</div><div className="text-xs muted mt-1">{c.count} prompts</div></Link>)}
+      </div>
+    </section>
 
-      {/* 3. LATEST PROMPTS SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2.5">
-            <Sparkles className="w-6 h-6 text-brand-orange" />
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Latest Prompts</h2>
-          </div>
-          <Link
-            href="/browse"
-            className="text-sm font-semibold text-brand-orange hover:underline inline-flex items-center gap-1"
-          >
-            View More <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+    {featured.length>0 && <Section title="✨ Featured Prompts" href="/browse" items={featured}/>}
+    <Section title="🎁 Free Prompts" href="/browse?tier=Free" items={free} icon={<Gift className="w-6 h-6 text-[#FF6B00]"/>}/>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {latestPrompts.map((prompt) => (
-            <PromptCard key={prompt.id} {...prompt} />
-          ))}
-        </div>
-      </section>
+    {/* VIP BANNER */}
+    {settings.vip_enabled!=="false" && <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="rounded-3xl bg-gradient-to-r from-[#FF6B00] to-amber-500 text-white p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-xl">
+        <div><div className="flex items-center gap-2 font-black text-2xl"><Crown className="w-7 h-7"/> VIP — All Prompts Access</div><p className="text-white/90 text-sm mt-1">একবার VIP নিলে সব Premium prompt unlock. আলাদা আলাদা কেনার ঝামেলা নেই।</p></div>
+        <div className="flex items-center gap-4"><span className="text-3xl font-black">৳{vipPrice}</span><Link href="/vip" className="bg-black text-white px-6 py-3 rounded-xl font-bold">Become VIP →</Link></div>
+      </div>
+    </section>}
 
-      {/* 4. FREE PROMPTS SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2.5">
-            <Gift className="w-6 h-6 text-brand-orange" />
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Free Prompts</h2>
-          </div>
-          <Link
-            href="/browse?tier=Free"
-            className="text-sm font-semibold text-brand-orange hover:underline inline-flex items-center gap-1"
-          >
-            View More <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+    <Section title="🔥 Premium Prompts" href="/premium" items={premium} icon={<Flame className="w-6 h-6 text-[#FF6B00]"/>}/>
+    <Section title="✨ Latest Prompts" href="/browse" items={latest} icon={<Sparkles className="w-6 h-6 text-[#FF6B00]"/>}/>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {freePrompts.map((prompt) => (
-            <PromptCard key={prompt.id} {...prompt} />
-          ))}
-        </div>
-      </section>
-
-      {/* 5. BOTTOM CTA SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8">
-        <Link
-          href="/browse"
-          className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-white bg-brand-orange hover:bg-brand-orangeHover transition-all shadow-xl shadow-brand-orange/20"
-        >
-          Explore All Prompts →
-        </Link>
-      </section>
-    </div>
-  );
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-10">
+      <h2 className="text-2xl sm:text-3xl font-black">Find the Right Prompt for Your Next Creation.</h2>
+      <Link href="/browse" className="btn-orange mt-6">Explore All Prompts →</Link>
+    </section>
+  </div>;
+}
+function Section({title,href,items,icon}:any){
+  if(!items?.length) return null;
+  return <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="flex justify-between items-center mb-6"><h2 className="text-2xl sm:text-3xl font-black flex items-center gap-2">{icon}{title}</h2><Link href={href} className="text-sm font-bold text-[#FF6B00] inline-flex items-center gap-1">View More <ArrowRight className="w-4 h-4"/></Link></div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">{items.map((p:any)=><PromptCard key={p.id} {...p}/>)}</div>
+  </section>;
 }

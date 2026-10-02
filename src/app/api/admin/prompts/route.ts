@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const _u:any=await getCurrentUser(); if(!_u || _u.role!=="ADMIN") return NextResponse.json({error:"Unauthorized"},{status:401});
     const prompts = await prisma.prompt.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
     const slug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
 
     // প্রম্পটের মূল্য নির্ধারণ (ফ্রি হলে ০, প্রিমিয়াম হলে কাস্টম প্রাইজ)
-    const finalPrice = isPremium ? parseFloat(price) || 49 : 0;
+    const finalPrice = isPremium ? parseFloat(price) || 30 : 0;
 
     const prompt = await prisma.prompt.create({
       data: {

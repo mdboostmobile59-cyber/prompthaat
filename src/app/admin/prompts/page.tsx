@@ -24,6 +24,7 @@ export default function AdminPromptsPage() {
     loadPrompts();
   }, []);
 
+  const handleDuplicate = async (p:any) => { try{ const res=await fetch("/api/admin/prompts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...p,title:p.title+" (Copy)",categoryId:p.categoryId})}); if(res.ok) loadPrompts(); }catch{} };
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`আপনি কি "${title}" প্রম্পটটি ডিলিট করতে চান?`)) return;
 
